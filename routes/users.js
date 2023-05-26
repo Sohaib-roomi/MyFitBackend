@@ -9,13 +9,13 @@ require('dotenv').config()
 // const id = myModule.id;
 
 //Get all users on default route
-router.get('/', authenticateToken, async (reqs, res) => {
+router.get('/allUsers', authenticateToken, async (reqs, res) => {
   console.log("hello", reqs.id);
   const users = await User.find({ id: reqs.id })
   res.status(200).json(users);
 
 })
-router.get('/showActivities', authenticateToken, async (req, res) => {
+router.get('/getActivities', authenticateToken, async (req, res) => {
   const ex = await exercise.find({userId:req.id})
   res.status(200).json(ex);
 })
@@ -41,8 +41,68 @@ router.post("/createActivity", authenticateToken, async (req, res) => {
     res.status(400).json('Error: ' + err);
   }
 });
+///////////////DELETE ACTIVITY
+router.route('/removeActivity',authenticateToken).delete(async (req,res)=>{
+const activityName=req.body.name
+ await exercise.deleteOne({name:activityName}).then(()=>{
+  res.status(200).json({ message: "Deleted activity" })
 
+ }).catch((e)=>{
+  console.log(e)
+  res.status(404).json({ message: "Activity not found" })
+ })
 
+})
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+//*ye update ki query hai ye use krlo user input se chalne wali hai * 
+// app.put('/update',(req,resp)=>{
+//  async function run(){
+// try{ 
+//   await client.connect();
+//     const dabba = req.body; //req.body gets {"$rename":{"University":"Uni"}} from postman req
+//     const filter = {};
+//     const updateDoc = dabba;
+    
+//     const result =await coll.updateMany(filter, updateDoc);
+//     resp.send('done')
+//    console.log(dabba)
+// }finally{
+//   await client.close();
+// }}
+//   run().catch(console.dir);
+// })
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+router.route('/updateActivity',authenticateToken).put(async (req,res)=>{
+  const activityName=req.body.actName///getting activity name from request
+  const name=req.body.name
+  const description=req.body.description
+  const type=req.body.type
+  const duration=req.body.duration
+  // { "name":activityName,"key":key,"value":value}
+  const filter={"name":activityName}///setting filter
+  
+  const updateDoc = {///setting new2  data 
+    $set: {
+    "name":name,
+    "description":description,
+    "type":type,
+    "duration":duration
+    }
+  }
+  //res.json(updateDoc)
+
+  await exercise.updateOne(filter, updateDoc).then(()=>{
+    res.status(200).json({ message: "updated activity" })
+  
+   }).catch((e)=>{
+    console.log(e)
+    res.status(404).json({ message: "error" })
+   })
+   
+  
+  })
 //Get a user by id
 router.route('/:id', authenticateToken).get(async (req, res) => {
   try {
