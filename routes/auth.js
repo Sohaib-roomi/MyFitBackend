@@ -1,13 +1,13 @@
 const router = require('express').Router();
 const User = require('../models/user.model')
-const bcrypt = require('bcrypt')
-
 const jwt = require('jsonwebtoken')
+const bcrypt = require('bcrypt')
+const authenticateToken = require('./authMiddleware');
 
-require('dotenv').config()
+
 // router.get('/', (req, res)=>{
 
-//     res.send('Welcome to fucking Auth Route');--> what is this badtameezzi
+//     res.send('Welcome to fucking Auth Route');
 // })
 
 // router.route('/').get((req, res)=>{
@@ -52,13 +52,62 @@ const { userName, userEmail, userPassword } = req.body;
 
         //Save User
         const data = await newUser.save();
-        res.status(200).json(data);
+        const resObj = {
+          status: true,
+          data: {data},
+          message: 'User Successfully Registered'
+        }
+        res.status(200).json(resObj);
       }
         catch (err) {
-         res.status(400).json('Error: ' + err);
+          console.log(err)
+          const resObj = {
+            status: false,
+            message: 'User cannot be registered'
+          }
+          res.status(400).json(resObj);
         }
   });
   
+
+
+router.route('/login').post(async (req, res) => {
+    try {
+      const { userEmail, userPassword,_id } = req.body;
+  
+      const userdata = await User.findOne({ userEmail: userEmail });
+      if (!userdata) {
+        return res.status(404).json("User Not Found!");
+      }
+  
+      const validPass = await bcrypt.compare(userPassword.trim(), userdata.userPassword);
+      if (!validPass) {
+        return res.status(401).json("Incorrect Password");
+      }
+  
+      // Password is correct, you can proceed with authentication or generating a token
+      const token = jwt.sign({ userEmail: userdata.userEmail, userName: userdata.userName, _id: userdata._id }, 'RESTFULAPIs');
+      const resObj = {
+        status: true,
+        data: {userdata, token},
+        message: 'User Successfully Logged-in'
+      }
+      return res.json(resObj);
+      //res.status(200).json("Login Successful");
+    } catch (err) {
+      const resObj = {
+        status: false,
+        message: 'User Cannot be logged in'
+      }
+      res.status(400).json(resObj);
+    }
+  });
+  
+
+
+module.exports = router
+
+
 //   router.route('/login').post(async (req, res) => {
 //     try{
 //         const userdata = await User.findOne({userEmail: req.body.userEmail})
@@ -74,44 +123,3 @@ const { userName, userEmail, userPassword } = req.body;
 //         res.status(400).json('Error: ' + err);
 //     }
 //   });
-
-//token does not contain sensitive info
-//refresh token 
-
-router.route('/login').post(async (req, res) => {
-  const { userEmail, userPassword } = req.body;
-  
-    try {
-      
-      
-      
-      const userdata = await User.findOne({ userEmail: userEmail });
-      if (!userdata) {
-        return res.status(404).json("User Not Found!");
-      }
-  
-      const validPass = await bcrypt.compare(userPassword.trim(), userdata.userPassword);
-      if (!validPass) {
-        return res.status(401).json("Incorrect Password");
-      }
-  
-      // Password is correct, you can proceed with authentication or generating a token
-  
-      
-      /////TOKEN GENERATION
-      // const useremail = userEmail;
-    const user = { email:userdata.userEmail,id:userdata._id }
-    const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET)
-    // req.userId = accessToken.id;
-    
-    //res.json({ accessToken: accessToken })
-    res.status(200).json(`Login Successful accesToken: ${accessToken}`);
-          console.log(userdata._id);
-    } catch (err) {
-      res.status(400).json('Error: ' + err);
-    }
-  });
-  
-
-
-module.exports = router

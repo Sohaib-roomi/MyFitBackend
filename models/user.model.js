@@ -17,8 +17,8 @@ const userSchema = mongoose.Schema(
             required:true,
             trim: true,
             unique: true,
-            // match: /^[a-zA-Z0-9]+$/,
-            max: 50
+            //match: /^[a-zA-Z0-9]+$/,
+            //max: 50,
         },
         userPassword:{
             type:String,
