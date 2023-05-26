@@ -2,9 +2,12 @@ const router = require('express').Router();
 const User = require('../models/user.model')
 const bcrypt = require('bcrypt')
 
+const jwt = require('jsonwebtoken')
+
+require('dotenv').config()
 // router.get('/', (req, res)=>{
 
-//     res.send('Welcome to fucking Auth Route');
+//     res.send('Welcome to fucking Auth Route');--> what is this badtameezzi
 // })
 
 // router.route('/').get((req, res)=>{
@@ -76,9 +79,12 @@ const { userName, userEmail, userPassword } = req.body;
 //refresh token 
 
 router.route('/login').post(async (req, res) => {
-    try {
-      const { userEmail, userPassword } = req.body;
+  const { userEmail, userPassword } = req.body;
   
+    try {
+      
+      
+      
       const userdata = await User.findOne({ userEmail: userEmail });
       if (!userdata) {
         return res.status(404).json("User Not Found!");
@@ -91,7 +97,16 @@ router.route('/login').post(async (req, res) => {
   
       // Password is correct, you can proceed with authentication or generating a token
   
-      res.status(200).json("Login Successful");
+      
+      /////TOKEN GENERATION
+      // const useremail = userEmail;
+    const user = { email:userdata.userEmail,id:userdata._id }
+    const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET)
+    // req.userId = accessToken.id;
+    
+    //res.json({ accessToken: accessToken })
+    res.status(200).json(`Login Successful accesToken: ${accessToken}`);
+          console.log(userdata._id);
     } catch (err) {
       res.status(400).json('Error: ' + err);
     }
